@@ -35,18 +35,18 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  CardModel.findByIdAndDelete(req.params.id)
+  CardModel.findOneAndDelete({ _id: req.params.id })
     .then((card) => {
+      if (!card) {
+        res.status(404).send({
+          message: `Карточка с id ${req.params.id} не найдена.`
+        });
+      }
       res.status(200).send(card);
     })
     .catch((err) => {
-      if (err.name === 'DocumentNotFound') {
-        return res.status(404).send({
-          message: `Карточка с id ${req.params.id} не найдена. Ошибка: ${err.message}`
-        });
-      }
-      return res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`
+      res.status(500).send({
+        message: `Ошибка. ${err.message}`
       });
     });
 };
