@@ -23,9 +23,6 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.json());
 app.use(router);
-app.use((req, res, next) => {
-  res.status(404).json({ message: 'Такой страницы не существует' });
-});
 
 const PORT = 3000;
 
