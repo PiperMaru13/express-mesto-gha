@@ -1,38 +1,34 @@
 const UserModel = require('../models/user');
+const httpStatus = require('../utils/errorstatus');
 
 const getUsers = (req, res) => {
   UserModel
-    .find().orFail()
+    .find()
     .then((users) => {
-      if (users.length === 0) {
-        res.status(400).send({
-          message: 'Введены некорректные данные',
-        });
-      } else {
-        res.status(200).send(users);
-      }
+      res.status(200).send(users);
     })
-    .catch((err) => {
-      res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`,
+    .catch(() => {
+      res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка по умолчанию.',
       });
     });
 };
 
 const createUser = (req, res) => {
+  const { name, about, avatar } = req.body;
   UserModel
-    .create({ ...req.body })
+    .create({ name, about, avatar })
     .then((user) => {
       res.status(201).send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(400).send({
-          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        return res.status(httpStatus.badRequest).send({
+          message: "Введены некорректные данные. Ошибка:",
         });
       }
-      return res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`
+      return res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка по умолчанию.',
       });
     });
 };
@@ -44,16 +40,16 @@ const getUserById = (req, res) => {
       res.status(200).send(user);
     }).catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(400).send({
-          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        return res.status(httpStatus.badRequest).send({
+          message: "Введены некорректные данные. Ошибка:",
         });
       }
       if (err.name === 'DocumentNotFoundError') {
-        return res.status(404).send({
-          message: `Пользователь c ${req.params.id} не найден. Ошибка: ${err.message}`
+        return res.status(httpStatus.notFound).send({
+          message: `Пользователь c ${req.params.id} не найден. Ошибка:`,
         });
       }
-      return res.status(500).send({ message: `Ошибка по умолчанию. ${err.message}` });
+      return res.status(httpStatus.internalServerError).send({ message: 'Ошибка по умолчанию.' });
     });
 };
 
@@ -65,17 +61,17 @@ const editUserInfo = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({
-          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        return res.status(httpStatus.badRequest).send({
+          message: "Введены некорректные данные. Ошибка:",
         });
       }
       if (err.name === 'DocumentNotFoundError') {
-        return res.status(404).send({
-          message: `Пользователь не найден. Ошибка: ${err.message}`
+        return res.status(httpStatus.notFound).send({
+          message: 'Пользователь не найден. Ошибка:',
         });
       }
-      return res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`
+      return res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка по умолчанию.',
       });
     });
 };
@@ -88,19 +84,21 @@ const editAvatar = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({
-          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        return res.status(httpStatus.badRequest).send({
+          message: "Введены некорректные данные. Ошибка:",
         });
       }
       if (err.name === 'DocumentNotFoundError') {
-        return res.status(404).send({
-          message: `Пользователь не найден. Ошибка: ${err.message}`
+        return res.status(httpStatus.notFound).send({
+          message: 'Пользователь не найден. Ошибка:',
         });
       }
-      return res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`
+      return res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка по умолчанию.',
       });
     });
 };
 
-module.exports = { getUsers, createUser, getUserById, editUserInfo, editAvatar };
+module.exports = {
+  getUsers, createUser, getUserById, editUserInfo, editAvatar,
+};

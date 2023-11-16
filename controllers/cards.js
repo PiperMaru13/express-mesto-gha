@@ -1,19 +1,14 @@
 const CardModel = require('../models/card');
+const httpStatus = require('../utils/errorstatus');
 
 const getCards = (req, res) => {
   CardModel.find()
     .then((cards) => {
-      if (cards.length === 0) {
-        res.status(400).send({
-          message: 'Введены некорректные данные',
-        });
-      } else {
-        res.status(200).send(cards);
-      }
+      res.status(200).send(cards);
     })
-    .catch((err) => {
-      res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`,
+    .catch(() => {
+      res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка по умолчанию.',
       });
     });
 };
@@ -24,12 +19,12 @@ const createCard = (req, res) => {
   CardModel.create({ name, link, owner }).then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        return res.status(400).send({
-          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        return res.status(httpStatus.badRequest).send({
+          message: 'Введены некорректные данные. Ошибка:',
         });
       }
-      return res.status(500).send({
-        message: `Ошибка по умолчанию. ${err.message}`
+      return res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка по умолчанию.',
       });
     });
 };
@@ -38,20 +33,20 @@ const deleteCard = (req, res) => {
   CardModel.findOneAndDelete({ _id: req.params.id })
     .then((card) => {
       if (!card) {
-        res.status(404).send({
-          message: `Карточка с id ${req.params.id} не найдена.`
+        return res.status(httpStatus.notFound).send({
+          message: `Карточка с id ${req.params.id} не найдена.`,
         });
       }
-      res.status(200).send(card);
+      return res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(400).send({
-          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        return res.status(httpStatus.badRequest).send({
+          message: 'Введены некорректные данные. Ошибка:',
         });
       }
-      return res.status(500).send({
-        message: `Ошибка. ${err.message}`
+      return res.status(httpStatus.internalServerError).send({
+        message: 'Ошибка.',
       });
     });
 };
@@ -63,17 +58,17 @@ const likeCard = (req, res) => CardModel.findByIdAndUpdate(
 ).orFail().then((card) => res.status(200).send(card))
   .catch((err) => {
     if (err.name === 'ValidationError' || err.name === 'CastError') {
-      return res.status(400).send({
-        message: `Введены некорректные данные. Ошибка: ${err.message}`
+      return res.status(httpStatus.badRequest).send({
+        message: 'Введены некорректные данные. Ошибка:',
       });
     }
     if (err.name === 'DocumentNotFoundError') {
-      return res.status(404).send({
-        message: `Карточка с id ${req.params.id} не найдена. Ошибка: ${err.message}`
+      return res.status(httpStatus.notFound).send({
+        message: `Карточка с id ${req.params.id} не найдена. Ошибка:`,
       });
     }
-    return res.status(500).send({
-      message: `Ошибка по умолчанию. ${err.message}`
+    return res.status(httpStatus.internalServerError).send({
+      message: 'Ошибка по умолчанию.',
     });
   });
 
@@ -84,18 +79,20 @@ const dislikeCard = (req, res) => CardModel.findByIdAndUpdate(
 ).orFail().then((card) => res.status(200).send(card))
   .catch((err) => {
     if (err.name === 'ValidationError' || err.name === 'CastError') {
-      return res.status(400).send({
-        message: `Введены некорректные данные. Ошибка: ${err.message}`
+      return res.status(httpStatus.badRequest).send({
+        message: 'Введены некорректные данные. Ошибка:',
       });
     }
     if (err.name === 'DocumentNotFoundError') {
-      return res.status(404).send({
-        message: `Карточка с id ${req.params.id} не найдена. Ошибка: ${err.message}`
+      return res.status(httpStatus.notFound).send({
+        message: `Карточка с id ${req.params.id} не найдена. Ошибка:`,
       });
     }
-    return res.status(500).send({
-      message: `Ошибка по умолчанию. ${err.message}`
+    return res.status(httpStatus.internalServerError).send({
+      message: 'Ошибка по умолчанию.',
     });
   });
 
-module.exports = { getCards, createCard, deleteCard, likeCard, dislikeCard };
+module.exports = {
+  getCards, createCard, deleteCard, likeCard, dislikeCard,
+};
