@@ -59,12 +59,12 @@ const getUserById = (req, res) => {
 
 const editUserInfo = (req, res) => {
   const { name, about } = req.body;
-  UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+  UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail().then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
@@ -82,12 +82,12 @@ const editUserInfo = (req, res) => {
 
 const editAvatar = (req, res) => {
   const { avatar } = req.body;
-  UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
-    .orFail().then((user) => {
+  UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+    .then((user) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });

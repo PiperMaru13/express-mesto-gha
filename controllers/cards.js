@@ -37,7 +37,7 @@ const createCard = (req, res) => {
 const deleteCard = (req, res) => {
   CardModel.findByIdAndDelete(req.params.id)
     .then((card) => {
-      res.status(201).send(card);
+      res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'DocumentNotFound') {
