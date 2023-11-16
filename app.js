@@ -21,11 +21,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(bodyParser.json());
-app.use(router);
 app.use((req, res, next) => {
   res.status(404).send({ message: 'Такой страницы не существует' });
 });
+app.use(bodyParser.json());
+app.use(router);
 
 const PORT = 3000;
 
