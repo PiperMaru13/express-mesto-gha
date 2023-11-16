@@ -24,7 +24,7 @@ const createCard = (req, res) => {
   CardModel.create({ name, link, owner }).then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({
+        return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
       }
@@ -41,7 +41,7 @@ const deleteCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'DocumentNotFound') {
-        res.status(404).send({
+        return res.status(404).send({
           message: `Карточка с id ${req.params.id} не найдена. Ошибка: ${err.message}`
         });
       }
@@ -58,7 +58,7 @@ const likeCard = (req, res) => CardModel.findByIdAndUpdate(
 ).orFail().then((card) => res.status(200).send(card))
   .catch((err) => {
     if (err.name === 'ValidationError' || err.name === 'CastError') {
-      res.status(400).send({
+      return res.status(400).send({
         message: `Введены некорректные данные. Ошибка: ${err.message}`
       });
     }
@@ -79,7 +79,7 @@ const dislikeCard = (req, res) => CardModel.findByIdAndUpdate(
 ).orFail().then((card) => res.status(200).send(card))
   .catch((err) => {
     if (err.name === 'ValidationError' || err.name === 'CastError') {
-      res.status(400).send({
+      return res.status(400).send({
         message: `Введены некорректные данные. Ошибка: ${err.message}`
       });
     }

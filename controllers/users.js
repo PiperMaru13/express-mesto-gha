@@ -27,7 +27,7 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({
+        return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
       }
@@ -65,7 +65,7 @@ const editUserInfo = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({
+        return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
       }
@@ -88,7 +88,7 @@ const editAvatar = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({
+        return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
       }
