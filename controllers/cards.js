@@ -45,7 +45,12 @@ const deleteCard = (req, res) => {
       res.status(200).send(card);
     })
     .catch((err) => {
-      res.status(500).send({
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({
+          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        });
+      }
+      return res.status(500).send({
         message: `Ошибка. ${err.message}`
       });
     });
