@@ -26,7 +26,7 @@ const createUser = (req, res) => {
       res.status(201).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
@@ -43,6 +43,11 @@ const getUserById = (req, res) => {
     .orFail().then((user) => {
       res.status(200).send(user);
     }).catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({
+          message: `Введены некорректные данные. Ошибка: ${err.message}`
+        });
+      }
       if (err.name === 'DocumentNotFoundError') {
         res.status(404).send({
           message: `Пользователь c ${req.params.id} не найден. Ошибка: ${err.message}`
@@ -59,7 +64,7 @@ const editUserInfo = (req, res) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
@@ -82,7 +87,7 @@ const editAvatar = (req, res) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
