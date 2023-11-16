@@ -63,7 +63,7 @@ const likeCard = (req, res) => CardModel.findByIdAndUpdate(
       });
     }
     if (err.name === 'DocumentNotFoundError') {
-      res.status(404).send({
+      return res.status(404).send({
         message: `Карточка с id ${req.params.id} не найдена. Ошибка: ${err.message}`
       });
     }
@@ -84,7 +84,7 @@ const dislikeCard = (req, res) => CardModel.findByIdAndUpdate(
       });
     }
     if (err.name === 'DocumentNotFoundError') {
-      res.status(404).send({
+      return res.status(404).send({
         message: `Карточка с id ${req.params.id} не найдена. Ошибка: ${err.message}`
       });
     }

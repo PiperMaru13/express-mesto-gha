@@ -44,16 +44,16 @@ const getUserById = (req, res) => {
       res.status(200).send(user);
     }).catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({
+        return res.status(400).send({
           message: `Введены некорректные данные. Ошибка: ${err.message}`
         });
       }
       if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({
+        return res.status(404).send({
           message: `Пользователь c ${req.params.id} не найден. Ошибка: ${err.message}`
         });
       }
-      res.status(500).send({ message: `Ошибка по умолчанию. ${err.message}` });
+      return res.status(500).send({ message: `Ошибка по умолчанию. ${err.message}` });
     });
 };
 
@@ -70,7 +70,7 @@ const editUserInfo = (req, res) => {
         });
       }
       if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({
+        return res.status(404).send({
           message: `Пользователь не найден. Ошибка: ${err.message}`
         });
       }
@@ -93,7 +93,7 @@ const editAvatar = (req, res) => {
         });
       }
       if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({
+        return res.status(404).send({
           message: `Пользователь не найден. Ошибка: ${err.message}`
         });
       }
