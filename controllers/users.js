@@ -24,7 +24,7 @@ const createUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(httpStatus.badRequest).send({
-          message: "Введены некорректные данные. Ошибка:",
+          message: 'Введены некорректные данные. Ошибка:',
         });
       }
       return res.status(httpStatus.internalServerError).send({
@@ -41,7 +41,7 @@ const getUserById = (req, res) => {
     }).catch((err) => {
       if (err.name === 'CastError') {
         return res.status(httpStatus.badRequest).send({
-          message: "Введены некорректные данные. Ошибка:",
+          message: 'Введены некорректные данные. Ошибка:',
         });
       }
       if (err.name === 'DocumentNotFoundError') {
@@ -62,7 +62,7 @@ const editUserInfo = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(httpStatus.badRequest).send({
-          message: "Введены некорректные данные. Ошибка:",
+          message: 'Введены некорректные данные. Ошибка:',
         });
       }
       if (err.name === 'DocumentNotFoundError') {
@@ -85,7 +85,7 @@ const editAvatar = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(httpStatus.badRequest).send({
-          message: "Введены некорректные данные. Ошибка:",
+          message: 'Введены некорректные данные. Ошибка:',
         });
       }
       if (err.name === 'DocumentNotFoundError') {
