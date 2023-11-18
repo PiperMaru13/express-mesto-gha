@@ -1,19 +1,15 @@
 const CardModel = require('../models/card');
 const httpStatus = require('../utils/errorstatus');
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   CardModel.find()
     .then((cards) => {
       res.status(200).send(cards);
     })
-    .catch(() => {
-      res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка по умолчанию.',
-      });
-    });
+    .catch(next);
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   CardModel.create({ name, link, owner }).then((card) => res.status(201).send(card))
@@ -23,35 +19,28 @@ const createCard = (req, res) => {
           message: 'Введены некорректные данные. Ошибка:',
         });
       }
-      return res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка по умолчанию.',
-      });
+      return next(err);
     });
 };
 
-const deleteCard = (req, res) => {
-  CardModel.findOneAndDelete({ _id: req.params.id })
+const deleteCard = (req, res, next) => {
+  CardModel.findById({ _id: req.params.id })
     .then((card) => {
       if (!card) {
-        return res.status(httpStatus.notFound).send({
-          message: `Карточка с id ${req.params.id} не найдена.`,
-        });
+        throw new Error('Такой карточки не существует');
       }
-      return res.status(200).send(card);
+      if (req.user._id !== card.owner.toString()) {
+        throw new Error('Нет прав на удаление карточки');
+      }
+      return CardModel.findByIdAndDelete(req.params.id);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(httpStatus.badRequest).send({
-          message: 'Введены некорректные данные. Ошибка:',
-        });
-      }
-      return res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка.',
-      });
-    });
+    .then(() => {
+      res.send({ message: 'Успешно!' });
+    })
+    .catch(next);
 };
 
-const likeCard = (req, res) => CardModel.findByIdAndUpdate(
+const likeCard = (req, res, next) => CardModel.findByIdAndUpdate(
   req.params.id,
   { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
   { new: true },
@@ -67,12 +56,10 @@ const likeCard = (req, res) => CardModel.findByIdAndUpdate(
         message: `Карточка с id ${req.params.id} не найдена. Ошибка:`,
       });
     }
-    return res.status(httpStatus.internalServerError).send({
-      message: 'Ошибка по умолчанию.',
-    });
+    return next(err);
   });
 
-const dislikeCard = (req, res) => CardModel.findByIdAndUpdate(
+const dislikeCard = (req, res, next) => CardModel.findByIdAndUpdate(
   req.params.id,
   { $pull: { likes: req.user._id } }, // убрать _id из массива
   { new: true },
@@ -88,9 +75,7 @@ const dislikeCard = (req, res) => CardModel.findByIdAndUpdate(
         message: `Карточка с id ${req.params.id} не найдена. Ошибка:`,
       });
     }
-    return res.status(httpStatus.internalServerError).send({
-      message: 'Ошибка по умолчанию.',
-    });
+    return next(err);
   });
 
 module.exports = {

@@ -1,39 +1,73 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const UserModel = require('../models/user');
 const httpStatus = require('../utils/errorstatus');
 
-const getUsers = (req, res) => {
+const getUsers = (req, res, next) => {
   UserModel
     .find()
     .then((users) => {
       res.status(200).send(users);
     })
-    .catch(() => {
-      res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка по умолчанию.',
-      });
-    });
+    .catch((next));
 };
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  UserModel
-    .create({ name, about, avatar })
+const createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => UserModel.create({
+      name, about, avatar, email, password: hash,
+    }))
     .then((user) => {
       res.status(201).send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(httpStatus.badRequest).send({
-          message: 'Введены некорректные данные. Ошибка:',
-        });
+      if (err.code === 11000) {
+        next(
+          new Error('Ошибка: Пользователь существует'),
+        );
       }
-      return res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка по умолчанию.',
-      });
     });
 };
 
-const getUserById = (req, res) => {
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+  UserModel.findOne({ email }).select('+password')
+    .then((user) => {
+      if (!user) {
+        return Promise.reject(
+          new Error('Неверные данные для авторизации'),
+        );
+      }
+      return bcrypt.compare(password, user.password).then((matched) => {
+        if (!matched) {
+          return Promise.reject(
+            new Error('Неверные данные для авторизации'),
+          );
+        }
+        return user;
+      });
+    })
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, '655567d1682364adfaca9652', { expiresIn: '7d' });
+      res.cookie('jwt', token, {
+        maxAge: 864000000,
+        httpOnly: true,
+        sameSite: true,
+      }).send({ token });
+    })
+    .catch(next);
+};
+
+const getUserInfo = (req, res, next) => {
+  UserModel.findById(req.user._id)
+    .orFail().then((user) => res.status(200).send(user))
+    .catch(next);
+};
+
+const getUserById = (req, res, next) => {
   UserModel
     .findById(req.params.id)
     .orFail().then((user) => {
@@ -49,11 +83,11 @@ const getUserById = (req, res) => {
           message: `Пользователь c ${req.params.id} не найден. Ошибка:`,
         });
       }
-      return res.status(httpStatus.internalServerError).send({ message: 'Ошибка по умолчанию.' });
+      return next(err);
     });
 };
 
-const editUserInfo = (req, res) => {
+const editUserInfo = (req, res, next) => {
   const { name, about } = req.body;
   UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail().then((user) => {
@@ -70,13 +104,11 @@ const editUserInfo = (req, res) => {
           message: 'Пользователь не найден. Ошибка:',
         });
       }
-      return res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка по умолчанию.',
-      });
+      return next(err);
     });
 };
 
-const editAvatar = (req, res) => {
+const editAvatar = (req, res, next) => {
   const { avatar } = req.body;
   UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
@@ -93,12 +125,10 @@ const editAvatar = (req, res) => {
           message: 'Пользователь не найден. Ошибка:',
         });
       }
-      return res.status(httpStatus.internalServerError).send({
-        message: 'Ошибка по умолчанию.',
-      });
+      return next(err);
     });
 };
 
 module.exports = {
-  getUsers, createUser, getUserById, editUserInfo, editAvatar,
+  getUsers, createUser, getUserById, editUserInfo, editAvatar, login, getUserInfo,
 };
