@@ -25,20 +25,28 @@ const createCard = (req, res, next) => {
 };
 
 const deleteCard = (req, res, next) => {
-  CardModel.findById({ _id: req.params.id })
+  const { cardId } = req.params;
+  const { userId } = req.user;
+  CardModel.findById({ cardId })
     .then((card) => {
       if (!card) {
-        return next(new NotFoundError('Такой карточки нет'));
+        throw new NotFoundError('Такой карточки нет');
       }
-      if (req.user._id !== card.owner.toString()) {
-        return next(new ForbiddenError('Нет прав на удаление!'));
+      if (userId !== card.owner.toString()) {
+        throw new ForbiddenError('Нет прав на удаление!');
       }
       return CardModel.findByIdAndDelete(req.params.id);
     })
     .then(() => {
       res.send({ message: 'Успешно!' });
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Введены некорректные данные. Ошибка'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 const likeCard = (req, res, next) => CardModel.findByIdAndUpdate(
