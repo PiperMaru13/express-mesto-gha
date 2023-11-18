@@ -35,7 +35,7 @@ const createUser = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  UserModel.findOne({ email }).select('+password')
+  UserModel.findOne({ email })
     .then((user) => {
       if (!user) {
         return res.status(httpStatus.Unauthorized).send({
