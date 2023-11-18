@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { CastError } = require('mongoose').Error;
 const UserModel = require('../models/user');
 const httpStatus = require('../utils/errorstatus');
 
@@ -35,7 +36,7 @@ const createUser = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  UserModel.findOne({ email })
+  UserModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return res.status(httpStatus.Unauthorized).send({
@@ -63,10 +64,18 @@ const login = (req, res, next) => {
 };
 
 const getUserInfo = (req, res, next) => {
-  const userId = req.user._id;
+  const userId = req.user;
   UserModel.findById(userId)
-    .then((user) => res.send(user))
-    .catch(next);
+    .orFail()
+    .then((user) => res.status(200).send({ data: user }))
+    .catch((err) => {
+      if (err instanceof CastError) {
+        return res.status(httpStatus.Unauthorized).send({
+          message: 'Введены некорректные данные. Ошибка:',
+        });
+      }
+      return next(err);
+    });
 };
 
 const getUserById = (req, res, next) => {
