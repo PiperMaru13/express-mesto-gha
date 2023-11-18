@@ -67,7 +67,7 @@ const getUserInfo = (req, res, next) => {
   const { id } = req.user.id;
   UserModel.findById(id)
     .orFail()
-    .then((user) => res.status(200).send({user}))
+    .then((user) => res.status(200).send({ user }))
     .catch((err) => {
       if (err instanceof CastError) {
         return res.status(httpStatus.Unauthorized).send({
