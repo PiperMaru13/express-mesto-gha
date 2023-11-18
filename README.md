@@ -15,5 +15,8 @@
 `npm run start` — запускает сервер   
 `npm run dev` — запускает сервер с hot-reload
 
+## Не проходит тесты 
+При добавлении пользователя засчитывает за пароль в ответе хэш пароля
+
 ## Ссылка
 https://github.com/PiperMaru13/express-mesto-gha
