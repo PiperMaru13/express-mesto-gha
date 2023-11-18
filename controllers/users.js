@@ -2,13 +2,16 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { CastError } = require('mongoose').Error;
 const UserModel = require('../models/user');
-const httpStatus = require('../utils/errorstatus');
+const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
+const ConflictError = require('../errors/ConflictError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const getUsers = (req, res, next) => {
   UserModel
     .find({})
     .then((users) => {
-      res.status(200).send(users);
+      res.send(users);
     })
     .catch((next));
 };
@@ -21,14 +24,14 @@ const createUser = (req, res, next) => {
     .then((hash) => UserModel.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => {
-      res.status(201).send(user);
+    .then(() => {
+      res.status(201).send({
+        name, about, avatar, email,
+      });
     })
     .catch((err) => {
       if (err.code === 11000) {
-        return res.status(httpStatus.Conflict).send({
-          message: 'Ошибка: Пользователь существует',
-        });
+        return next(new ConflictError('Ошибка: Пользователь существует'));
       }
       return next(err);
     });
@@ -39,15 +42,11 @@ const login = (req, res, next) => {
   UserModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return res.status(httpStatus.Unauthorized).send({
-          message: 'Неверные данные для авторизации',
-        });
+        return next(new UnauthorizedError('Неверные данные для авторизации'));
       }
       return bcrypt.compare(password, user.password).then((matched) => {
         if (!matched) {
-          return res.status(httpStatus.Unauthorized).send({
-            message: 'Неверные данные для авторизации',
-          });
+          return next(new UnauthorizedError('Неверные данные для авторизации'));
         }
         return user;
       });
@@ -64,15 +63,13 @@ const login = (req, res, next) => {
 };
 
 const getUserInfo = (req, res, next) => {
-  const { id } = req.user.id;
-  UserModel.findById(id)
+  const { _id } = req.user;
+  UserModel.findById(_id)
     .orFail()
-    .then((user) => res.status(200).send({ user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err instanceof CastError) {
-        return res.status(httpStatus.Unauthorized).send({
-          message: 'Введены некорректные данные. Ошибка:',
-        });
+        return next(new UnauthorizedError('Введены некорректные данные. Ошибка'));
       }
       return next(err);
     });
@@ -82,17 +79,13 @@ const getUserById = (req, res, next) => {
   UserModel
     .findById(req.params.id)
     .orFail().then((user) => {
-      res.status(200).send(user);
+      res.send(user);
     }).catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(httpStatus.badRequest).send({
-          message: 'Введены некорректные данные. Ошибка:',
-        });
+        return next(new BadRequestError('Введены некорректные данные. Ошибка'));
       }
       if (err.name === 'DocumentNotFoundError') {
-        return res.status(httpStatus.notFound).send({
-          message: `Пользователь c ${req.params.id} не найден. Ошибка:`,
-        });
+        return next(new NotFoundError(`Такой карточки с id ${req.params.id} нет`));
       }
       return next(err);
     });
@@ -102,18 +95,14 @@ const editUserInfo = (req, res, next) => {
   const { name, about } = req.body;
   UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail().then((user) => {
-      res.status(200).send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(httpStatus.badRequest).send({
-          message: 'Введены некорректные данные. Ошибка:',
-        });
+        return next(new UnauthorizedError('Введены некорректные данные. Ошибка'));
       }
       if (err.name === 'DocumentNotFoundError') {
-        return res.status(httpStatus.notFound).send({
-          message: 'Пользователь не найден. Ошибка:',
-        });
+        return next(new NotFoundError('Пользователь не найден. Ошибка'));
       }
       return next(err);
     });
@@ -123,18 +112,14 @@ const editAvatar = (req, res, next) => {
   const { avatar } = req.body;
   UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => {
-      res.status(200).send(user);
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(httpStatus.badRequest).send({
-          message: 'Введены некорректные данные. Ошибка:',
-        });
+        return next(new BadRequestError('Введены некорректные данные. Ошибка'));
       }
       if (err.name === 'DocumentNotFoundError') {
-        return res.status(httpStatus.notFound).send({
-          message: 'Пользователь не найден. Ошибка:',
-        });
+        return next(new NotFoundError('Пользователь не найден. Ошибка'));
       }
       return next(err);
     });

@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { errors } = require('celebrate');
 const router = require('./routes');
-const httpStatus = require('./utils/errorstatus');
 const { errorHandler } = require('./middlewares/errorHandler');
+const NotFoundError = require('./errors/NotFoundError');
 
 const { PORT = 3000, DEV_SECRET = '655567d1682364adfaca9652', MY_DB = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 
@@ -24,8 +24,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(router);
-app.use((req, res) => {
-  res.status(httpStatus.notFound).json({ message: 'Такой страницы не существует' });
+app.use((req, res, next) => {
+  next(
+    new NotFoundError('Страница не найдена'),
+  );
 });
 app.use(errors());
 app.use(errorHandler);
