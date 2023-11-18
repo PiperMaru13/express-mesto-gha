@@ -1,15 +1,7 @@
 const CardModel = require('../models/card');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
-const ForbiddenError = require('../utils/errorstatus');
-
-const getCards = (req, res, next) => {
-  CardModel.find()
-    .then((cards) => {
-      res.send(cards);
-    })
-    .catch(next);
-};
+const ForbiddenError = require('../errors/ForbiddenError');
 
 const createCard = (req, res, next) => {
   const { name, link } = req.body;
@@ -24,29 +16,29 @@ const createCard = (req, res, next) => {
     });
 };
 
+const getCards = (req, res, next) => {
+  CardModel.find()
+    .then((cards) => {
+      res.send(cards);
+    })
+    .catch(next);
+};
+
 const deleteCard = (req, res, next) => {
-  const { cardId } = req.params;
-  const { userId } = req.user;
-  CardModel.findById({ cardId })
+  CardModel.findById({ _id: req.params.id })
     .then((card) => {
       if (!card) {
-        throw new NotFoundError('Такой карточки нет');
+        return next(new NotFoundError('Такой карточки нет'));
       }
-      if (userId !== card.owner.toString()) {
-        throw new ForbiddenError('Нет прав на удаление!');
+      if (req.user._id !== card.owner.toString()) {
+        return next(new ForbiddenError('Нет прав на удаление!'));
       }
       return CardModel.findByIdAndDelete(req.params.id);
     })
     .then(() => {
       res.send({ message: 'Успешно!' });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequestError('Введены некорректные данные. Ошибка'));
-      } else {
-        next(err);
-      }
-    });
+    .catch(next);
 };
 
 const likeCard = (req, res, next) => CardModel.findByIdAndUpdate(
