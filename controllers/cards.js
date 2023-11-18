@@ -27,10 +27,14 @@ const deleteCard = (req, res, next) => {
   CardModel.findById({ _id: req.params.id })
     .then((card) => {
       if (!card) {
-        throw new Error('Такой карточки не существует');
+        return res.status(httpStatus.notFound).send({
+          message: 'Такой карточки нет',
+        });
       }
       if (req.user._id !== card.owner.toString()) {
-        throw new Error('Нет прав на удаление карточки');
+        return res.status(httpStatus.Forbidden).send({
+          message: 'Нет прав на удаление!',
+        });
       }
       return CardModel.findByIdAndDelete(req.params.id);
     })

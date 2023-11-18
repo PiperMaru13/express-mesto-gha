@@ -5,7 +5,7 @@ const httpStatus = require('../utils/errorstatus');
 
 const getUsers = (req, res, next) => {
   UserModel
-    .find()
+    .find({})
     .then((users) => {
       res.status(200).send(users);
     })
@@ -25,10 +25,11 @@ const createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        next(
-          new Error('Ошибка: Пользователь существует'),
-        );
+        return res.status(httpStatus.Conflict).send({
+          message: 'Ошибка: Пользователь существует',
+        });
       }
+      return next(err);
     });
 };
 
@@ -37,15 +38,15 @@ const login = (req, res, next) => {
   UserModel.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(
-          new Error('Неверные данные для авторизации'),
-        );
+        return res.status(httpStatus.Unauthorized).send({
+          message: 'Неверные данные для авторизации',
+        });
       }
       return bcrypt.compare(password, user.password).then((matched) => {
         if (!matched) {
-          return Promise.reject(
-            new Error('Неверные данные для авторизации'),
-          );
+          return res.status(httpStatus.Unauthorized).send({
+            message: 'Неверные данные для авторизации',
+          });
         }
         return user;
       });
@@ -53,7 +54,7 @@ const login = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, '655567d1682364adfaca9652', { expiresIn: '7d' });
       res.cookie('jwt', token, {
-        maxAge: 864000000,
+        maxAge: 1000000,
         httpOnly: true,
         sameSite: true,
       }).send({ token });
@@ -62,8 +63,9 @@ const login = (req, res, next) => {
 };
 
 const getUserInfo = (req, res, next) => {
-  UserModel.findById(req.user._id)
-    .orFail().then((user) => res.status(200).send(user))
+  const userId = req.user._id;
+  UserModel.findById(userId)
+    .then((user) => res.send(user))
     .catch(next);
 };
 
