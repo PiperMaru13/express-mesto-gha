@@ -64,10 +64,10 @@ const login = (req, res, next) => {
 };
 
 const getUserInfo = (req, res, next) => {
-  const userId = req.user;
-  UserModel.findById(userId)
+  const { id } = req.user.id;
+  UserModel.findById(id)
     .orFail()
-    .then((user) => res.status(200).send({ data: user }))
+    .then((user) => res.status(200).send({user}))
     .catch((err) => {
       if (err instanceof CastError) {
         return res.status(httpStatus.Unauthorized).send({

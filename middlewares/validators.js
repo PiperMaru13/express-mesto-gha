@@ -11,7 +11,7 @@ module.exports.signinValidator = celebrate({
 
 module.exports.userIdValidator = celebrate({
   params: Joi.object().keys({
-    id: Joi.string().hex().length(24).required(),
+    id: Joi.string().length(24).hex().required(),
   }),
 });
 
