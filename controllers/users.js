@@ -30,6 +30,9 @@ const createUser = (req, res, next) => {
       });
     })
     .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new BadRequestError('Введены некорректные данные. Ошибка'));
+      }
       if (err.code === 11000) {
         return next(new ConflictError('Ошибка: Пользователь существует'));
       }
@@ -68,8 +71,11 @@ const getUserInfo = (req, res, next) => {
     .orFail()
     .then((user) => res.send({ user }))
     .catch((err) => {
+      if (err.name === 'DocumentNotFoundError') {
+        return next(new NotFoundError('Пользователь не найден. Ошибка'));
+      }
       if (err instanceof CastError) {
-        return next(new UnauthorizedError('Введены некорректные данные. Ошибка'));
+        return next(new BadRequestError('Введены некорректные данные. Ошибка'));
       }
       return next(err);
     });
@@ -99,7 +105,7 @@ const editUserInfo = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new UnauthorizedError('Введены некорректные данные. Ошибка'));
+        return next(new BadRequestError('Введены некорректные данные. Ошибка'));
       }
       if (err.name === 'DocumentNotFoundError') {
         return next(new NotFoundError('Пользователь не найден. Ошибка'));
